@@ -85,13 +85,13 @@ namespace LoxInterperter1
                     break;
                 case '"':
                     {
-                        ParseString();
+                        ScanString();
                         break;
                     }
                 default:
                     if (IsDigit(c))
                     {
-                        ParseNumber();
+                        ScanNumber();
                     }
                     else
                     {
@@ -101,9 +101,30 @@ namespace LoxInterperter1
             }
         }
 
-        private void ParseNumber()
+        private void ScanNumber()
         {
-            throw new NotImplementedException();
+            while (IsDigit(Peek()))
+                Advance();
+
+            // Look for a fractional part.
+            if (Peek() == '.' && IsDigit(PeekNext()))
+            {
+                // Consume the "."
+                Advance();
+
+                while (IsDigit(Peek()))
+                    Advance();
+            }
+
+            AddToken(TokenType.NUMBER,
+                double.Parse(source.Substring(start, current)));
+        }
+
+        private char PeekNext()
+        {
+            if (current + 1 >= source.Length)
+                return '\0';
+            return source.ElementAt(current + 1);
         }
 
         private bool IsDigit(char c)
@@ -111,7 +132,7 @@ namespace LoxInterperter1
             return c >= '0' && c <= '9';
         }
 
-        private void ParseString()
+        private void ScanString()
         {
             while (Peek() != '"' && !IsAtEnd())
             {
