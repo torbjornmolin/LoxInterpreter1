@@ -7,6 +7,27 @@ namespace LoxInterperter1
         private int start = 0;
         private int current = 0;
         private int line = 1;
+
+        private static Dictionary<string, TokenType> keywords =
+        new Dictionary<string, TokenType>()
+        {
+            { "and",    TokenType.AND },
+            { "class",  TokenType.CLASS },
+            { "else",   TokenType.ELSE },
+            { "false",  TokenType.FALSE },
+            { "for",    TokenType.FOR },
+            { "fun",    TokenType.FUN },
+            { "if",     TokenType.IF },
+            { "nil",    TokenType.NIL },
+            { "or",     TokenType.OR },
+            { "print",  TokenType.PRINT },
+            { "return", TokenType.RETURN },
+            { "super",  TokenType.SUPER },
+            { "this",   TokenType.THIS },
+            { "true",   TokenType.TRUE },
+            { "var",    TokenType.VAR },
+            { "while",  TokenType.WHILE }
+        };
         public Scanner(string source)
         {
             this.source = source;
@@ -93,12 +114,42 @@ namespace LoxInterperter1
                     {
                         ScanNumber();
                     }
+                    if (IsAlpha(c))
+                    {
+                        ScanIdentifier();
+                    }
                     else
                     {
                         Program.Error(line, "Unexpected character.");
                     }
                     break;
             }
+        }
+
+        private void ScanIdentifier()
+        {
+            while (IsAlphaNumeric(Peek()))
+                Advance();
+
+            var text = source.Substring(start, current - start);
+            TokenType type;
+            if (!keywords.TryGetValue(text, out type))
+            {
+                type = TokenType.IDENTIFIER;
+            }
+            AddToken(TokenType.IDENTIFIER);
+        }
+
+        private bool IsAlphaNumeric(char c)
+        {
+            return IsAlpha(c) || IsDigit(c);
+        }
+
+        private bool IsAlpha(char c)
+        {
+            return (c >= 'a' && c <= 'z') ||
+              (c >= 'A' && c <= 'Z') ||
+               c == '_';
         }
 
         private void ScanNumber()
@@ -117,7 +168,7 @@ namespace LoxInterperter1
             }
 
             AddToken(TokenType.NUMBER,
-                double.Parse(source.Substring(start, current)));
+                double.Parse(source.Substring(start, current - start)));
         }
 
         private char PeekNext()
@@ -149,7 +200,7 @@ namespace LoxInterperter1
             // The Closing ".
             Advance();
 
-            var value = source.Substring(start + 1, current - 1);
+            var value = source.Substring(start + 1, current - start - 1);
             AddToken(TokenType.STRING, value);
         }
         private char Peek()
@@ -177,7 +228,7 @@ namespace LoxInterperter1
 
         private void AddToken(TokenType type, object? literal = null)
         {
-            string text = source.Substring(start, current);
+            string text = source.Substring(start, current - start);
             tokens.Add(new Token(type, text, literal, line));
         }
 
